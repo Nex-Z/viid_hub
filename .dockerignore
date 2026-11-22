@@ -1,0 +1,12 @@
+**
+!go.mod
+!go.sum
+!cmd/
+!cmd/**
+!web/
+!web/**
+web/node_modules/
+web/dist/
+!demo/
+!demo/media/
+!demo/media/**

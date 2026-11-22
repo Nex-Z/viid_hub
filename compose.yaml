@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: viid_hub
+      POSTGRES_USER: viid
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "viid", "-d", "viid_hub"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${VIID_BIND_IP:-127.0.0.1}:${VIID_PORT:-14000}:14000"
+    environment:
+      DATABASE_URL: postgres://viid@db:5432/viid_hub?sslmode=disable
+      PGPASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      VIID_USER: ${VIID_USER:-admin}
+      VIID_PASSWORD: ${VIID_PASSWORD:?set VIID_PASSWORD}
+      VIID_DEVICE_PASSWORD: ${VIID_DEVICE_PASSWORD:?set VIID_DEVICE_PASSWORD}
+      VIID_SERVER_ID: "${VIID_SERVER_ID:-00000000002000000001}"
+      VIID_STRICT_2017: "${VIID_STRICT_2017:-false}"
+      VIID_DIGEST_ONLY: "${VIID_DIGEST_ONLY:-true}"
+      VIID_QUERY_TOKEN: ${VIID_QUERY_TOKEN:-}
+      VIID_IDENTITY_READER: ${VIID_IDENTITY_READER:-}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:14000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  pgdata:

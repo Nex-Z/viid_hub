@@ -152,3 +152,14 @@ npm --prefix web run build
 本地验收包括 `TestPostgresLifecycle` 和 `TestExchangeOverHTTP`。后者启动两个使用独立 schema 的视图库、业务回调与通知接收端，核对 Digest 挑战和重复 nonce 计数拒绝、订阅和取消、双库带图级联、消费端鉴权和脱敏、503 后同一投递编号重试。测试不需要真实设备、生产口令或可访问的上级平台。
 
 项目目录、代码风格、Windows 工具约定和提交说明见[贡献指南](AGENTS.md)。
+
+## Docker Compose 部署
+
+在仓库根目录将 `.env.docker.example` 复制为 `.env.docker`，为数据库、管理员和设备分别填写独立密码。默认仅允许本机访问；需要局域网设备接入时，将 `VIID_BIND_IP` 设为宿主机的局域网 IP。
+
+```sh
+docker compose --env-file .env.docker up -d --build
+docker compose --env-file .env.docker ps
+```
+
+默认管理地址为 http://127.0.0.1:14000 ，健康检查路径为 `/healthz`。PostgreSQL 使用命名卷 `pgdata` 保存记录和图片。停止服务并保留数据可执行 `docker compose --env-file .env.docker down`。数据库密码在首次初始化数据卷时生效。
